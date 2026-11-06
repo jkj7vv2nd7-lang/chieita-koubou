@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>知恵板工房 ― タングラム・清少納言・ラッキー・簡単な知恵板</title>
+<meta name="description" content="4つの知恵板（タングラム／清少納言知恵板／ラッキー・パズル／簡単な知恵板）で遊べる工房。ドラッグで動かし、回して、裏返して。お題・凸多角形コレクション・印刷型紙つき。">
+<link rel="icon" href="icon.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+:root{
+  --ink:#2b2118; --sub:#7a6a58; --paper:#faf5ec; --card:#fffdf8; --line:#e5d9c5;
+  --main:#b3541e; --main2:#e4572e; --accent:#2e7d6b; --gold:#f2a541;
+  --shadow:0 3px 14px rgba(90,60,20,.10);
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",sans-serif;
+  background:var(--paper); color:var(--ink); line-height:1.65; font-size:15px;
+}
+button{font-family:inherit}
+header.hero{
+  background:linear-gradient(135deg,#8a3b12 0%,#b3541e 45%,#e4572e 100%);
+  color:#fff; padding:26px 16px 20px; text-align:center; position:relative; overflow:hidden;
+}
+header.hero h1{margin:0 0 4px; font-size:32px; letter-spacing:.12em; font-weight:900}
+header.hero p{margin:0; opacity:.92; font-size:13.5px}
+.hero-pieces{display:flex; justify-content:center; gap:5px; margin:14px 0 2px}
+.hero-pieces svg{width:118px; height:118px; filter:drop-shadow(0 6px 10px rgba(0,0,0,.25)); animation:bob 5s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-6px) rotate(1.5deg)}}
+main{max-width:860px; margin:0 auto; padding:14px 12px 30px}
+.card{background:var(--card); border:1px solid var(--line); border-radius:18px; box-shadow:var(--shadow); padding:16px; margin-bottom:14px}
+.card h2{margin:0 0 10px; font-size:18px}
+.card h3{margin:16px 0 6px; font-size:15.5px}
+.hint{color:var(--sub); font-size:13px}
+.board-grid{display:grid; grid-template-columns:1fr 1fr; gap:9px}
+@media(max-width:560px){.board-grid{grid-template-columns:1fr}}
+.board-btn{
+  border:2px solid var(--line); background:#fff; border-radius:14px; padding:12px 14px;
+  text-align:left; cursor:pointer; min-height:64px; transition:transform .08s, border-color .15s, background .15s;
+}
+.board-btn .bn{font-size:16.5px; font-weight:800; display:block}
+.board-btn .bs{font-size:12.5px; color:var(--sub)}
+.board-btn[aria-pressed="true"]{border-color:var(--main2); background:#fff3e8}
+.board-btn:active{transform:scale(.98)}
+.mode-row{display:flex; gap:7px; flex-wrap:wrap; margin:4px 0 10px}
+.mode-btn{
+  border:2px solid var(--line); background:#fff; border-radius:999px; padding:9px 16px;
+  font-size:14px; font-weight:700; cursor:pointer; min-height:44px; color:var(--ink);
+}
+.mode-btn[aria-pressed="true"]{background:var(--main); border-color:var(--main); color:#fff}
+.mode-btn:active{transform:scale(.97)}
+#stage-wrap{position:relative; background:#fffaf0; border:1.5px solid var(--line); border-radius:14px; overflow:hidden}
+#stage{display:block; width:100%; height:auto; touch-action:none}
+.piece{cursor:grab}
+.piece.sel polygon.body{stroke:#1d4ed8; stroke-width:.09}
+.piece polygon.body{stroke:rgba(60,35,10,.55); stroke-width:.045; stroke-linejoin:round}
+.target-outline{fill:rgba(70,50,20,.10); stroke:#8a6d3b; stroke-width:.07; stroke-dasharray:.28 .16}
+.sol-poly{fill:rgba(37,99,235,.20); stroke:rgba(37,99,235,.65); stroke-width:.04; stroke-linejoin:round}
+.toolbar{display:flex; gap:7px; flex-wrap:wrap; margin-top:10px; align-items:center}
+.tool-btn{
+  border:1.5px solid var(--line); background:#fff; border-radius:999px; padding:8px 14px;
+  font-size:13.5px; font-weight:700; cursor:pointer; min-height:42px; color:var(--ink);
+}
+.tool-btn:active{transform:scale(.96)}
+.tool-btn.primary{background:var(--accent); border-color:var(--accent); color:#fff}
+.tool-btn[disabled]{opacity:.45; cursor:default}
+.tool-btn[aria-pressed="true"]{background:var(--gold); border-color:var(--gold); color:#3a2703}
+.tool-btn .sw{display:inline-block; width:11px; height:11px; border-radius:50%; background:#cbd5e1; vertical-align:-1px; margin-right:5px}
+.tool-btn[aria-pressed="true"] .sw{background:var(--accent)}
+.drag-note{font-size:12.5px; color:var(--sub); margin:8px 2px 0}
+.chips{display:flex; gap:7px; flex-wrap:wrap; margin:6px 0 2px}
+.chip{
+  border:1.5px solid var(--line); background:#fff; border-radius:999px; padding:7px 13px;
+  font-size:13.5px; font-weight:700; cursor:pointer; min-height:40px;
+}
+.chip[aria-pressed="true"]{background:var(--gold); border-color:var(--gold); color:#3a2703}
+.chip .done{color:var(--accent); font-weight:900}
+.chal-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(104px,1fr)); gap:9px}
+.chal{
+  border:2px solid var(--line); background:#fff; border-radius:13px; padding:8px 6px 7px;
+  cursor:pointer; text-align:center; min-height:104px;
+}
+.chal svg{width:100%; height:64px}
+.chal .cn{font-size:12.5px; font-weight:700; display:block; margin-top:2px}
+.chal .cd{font-size:11px; color:var(--accent); font-weight:900; min-height:14px; display:block}
+.chal.unknown{border-style:dashed; background:#f7f2e7; cursor:default}
+.chal.unknown .cn{color:var(--sub)}
+.msg{min-height:1.6em; font-weight:700; color:var(--accent); margin:8px 2px 0}
+.col-body p{margin:0 0 10px}
+.col-body ul{margin:4px 0 10px; padding-left:20px}
+a{color:var(--main)}
+footer{text-align:center; color:var(--sub); font-size:12px; padding:8px 14px 30px}
+.toast{
+  position:fixed; left:50%; bottom:22px; transform:translateX(-50%) translateY(20px);
+  background:#2b2118; color:#fff; padding:10px 18px; border-radius:999px; font-size:14px;
+  opacity:0; pointer-events:none; transition:all .25s; z-index:60; max-width:92vw; text-align:center;
+}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+.confetti{position:fixed; inset:0; pointer-events:none; z-index:55; overflow:hidden}
+.confetti i{position:absolute; top:-14px; width:10px; height:14px; border-radius:2px; animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(105vh) rotate(680deg)}}
+.print-btns{display:flex; gap:7px; flex-wrap:wrap}
+.serif{font-family:"Times New Roman","Hiragino Mincho ProN",serif}
+.frac{display:inline-block; vertical-align:-.42em; text-align:center; margin:0 .08em}
+.frac .num{display:block; border-bottom:.065em solid currentColor; padding:0 .18em; font-size:.82em; line-height:1.25}
+.frac .den{display:block; padding:0 .18em; font-size:.82em; line-height:1.25}
+</style>
+</head>
+<body>
+<header class="hero">
+  <h1>知恵板工房</h1>
+  <p>タングラム・清少納言・ラッキー・簡単な知恵板 ― 4つの知恵板で遊ぶ工房</p>
+  <div class="hero-pieces" aria-hidden="true">
+    <svg viewBox="-2.2 -2.2 4.4 4.4"><g id="hero-tan"></g></svg>
+  </div>
+  <p>指で動かして、回して、裏返して。形の不思議を、自分の手で。</p>
+</header>
+<main>
+  <section class="card" aria-label="知恵板を選ぶ">
+    <h2>🧩 知恵板を選ぶ</h2>
+    <div class="board-grid" id="board-grid"></div>
+  </section>
+
+  <section class="card" aria-label="遊ぶ">
+    <div class="mode-row" role="group" aria-label="モード">
+      <button type="button" class="mode-btn" id="mode-free" aria-pressed="true">フリー</button>
+      <button type="button" class="mode-btn" id="mode-odai" aria-pressed="false">お題</button>
+      <button type="button" class="mode-btn" id="mode-chal" aria-pressed="false">凸多角形チャレンジ</button>
+    </div>
+    <div id="odai-picker" style="display:none">
+      <p class="hint" style="margin:0 0 4px">お題の形に、ピースを全部ぴったり入れてみましょう。</p>
+      <div class="chips" id="odai-chips"></div>
+    </div>
+    <div class="toolbar" style="margin:0 0 8px" role="group" aria-label="ピースの見た目">
+      <span class="hint" style="font-weight:700">ピースの見た目：</span>
+      <button type="button" class="tool-btn" id="theme-black" aria-pressed="false">黒</button>
+      <button type="button" class="tool-btn" id="theme-color" aria-pressed="true">カラフル</button>
+      <button type="button" class="tool-btn" id="theme-pattern" aria-pressed="false">模様</button>
+    </div>
+    <div id="stage-wrap">
+      <svg id="stage" role="img" aria-label="知恵板の盤面"></svg>
+    </div>
+    <p class="msg" id="msg" aria-live="polite"></p>
+    <div class="toolbar" id="piece-tools">
+      <button type="button" class="tool-btn" id="rot-l">⟲ 45°</button>
+      <button type="button" class="tool-btn" id="rot-r">⟳ 45°</button>
+      <button type="button" class="tool-btn" id="rot-l5">⟲ 5°</button>
+      <button type="button" class="tool-btn" id="rot-r5">⟳ 5°</button>
+      <button type="button" class="tool-btn" id="flip-btn">⇋ 裏返す</button>
+    </div>
+    <div class="toolbar">
+      <button type="button" class="tool-btn" id="snap-btn" aria-pressed="true"><span class="sw"></span>吸着（スナップ）</button>
+      <button type="button" class="tool-btn" id="answer-btn" style="display:none">こたえを見る</button>
+      <button type="button" class="tool-btn primary" id="judge-btn" style="display:none">できたか確かめる</button>
+      <button type="button" class="tool-btn" id="reset-btn">最初から</button>
+    </div>
+    <p class="drag-note">💡 ピースは指（マウス）でドラッグ。ダブルタップでも45°回ります。ピースを選んでから、下のボタンで回転・裏返しもできます。</p>
+  </section>
+
+  <section class="card" id="chal-card" style="display:none" aria-label="凸多角形コレクション">
+    <h2>🔷 凸多角形コレクション</h2>
+    <p class="hint" id="chal-note"></p>
+    <div class="chal-grid" id="chal-grid"></div>
+  </section>
+
+  <section class="card col-body" aria-label="コラム">
+    <h2>📖 知恵板の話</h2>
+    <div id="column-body"></div>
+  </section>
+
+  <section class="card" aria-label="印刷キット">
+    <h2>🖨️ 印刷キット（型紙）</h2>
+    <p class="hint">実際の大きさで印刷できる型紙PDFを作ります（タングラム・清少納言・簡単な知恵板は一辺10cm、ラッキー・パズルは12.5cm×10cm）。印刷したら、まず「5cm」の線が本当に5cmか確かめてください。ずれているときは、プリンタの設定で「実際のサイズ（100%）」を選んでください。</p>
+    <div class="toolbar" style="margin:0 0 8px" role="group" aria-label="型紙の種類">
+      <span class="hint" style="font-weight:700">型紙の種類：</span>
+      <button type="button" class="tool-btn" id="kit-mono" aria-pressed="true">線画</button>
+      <button type="button" class="tool-btn" id="kit-color" aria-pressed="false">カラー</button>
+      <button type="button" class="tool-btn" id="kit-pattern" aria-pressed="false">模様</button>
+    </div>
+    <p class="hint">カラー版・模様版は、そのまま切り分けて遊べます。色画用紙や折り紙に線画版を印刷して切り分けるのもおすすめです。</p>
+    <div class="print-btns" id="print-btns"></div>
+    <div class="toolbar" id="print-actions" style="display:none">
+      <button type="button" class="tool-btn primary" id="share-kit">📤 共有する（印刷・保存）</button>
+      <button type="button" class="tool-btn" id="dl-kit">⬇️ PDFを保存</button>
+    </div>
+    <p class="hint" id="kit-name"></p>
+  </section>
+
+  <section class="card col-body" aria-label="もっと知りたい方へ">
+    <h2>🔗 もっと知りたい方へ</h2>
+    <ul>
+      <li><a href="https://en.wikipedia.org/wiki/Tangram" target="_blank" rel="noopener">Wikipedia「Tangram」</a> ― タングラムの歴史と、凸多角形が13種であることの解説（英語）</li>
+      <li><a href="https://happylilac.net/tanglam.html" target="_blank" rel="noopener">ちびむすドリル「タングラムパズル」</a> ― 印刷して遊べる問題集（子ども向け）</li>
+      <li><a href="https://openlibrary.org/books/OL5612014M/The_8th_book_of_tan_700_tangrams." target="_blank" rel="noopener">Open Library：Sam Loyd『The 8th Book of Tan』</a> ― 古典の図案集（700図案）</li>
+    </ul>
+    <h3>参考文献</h3>
+    <ul>
+      <li>『数理パズル』（中公新書、1976）― 4つの知恵板の切り方と、和久井静夫の問題の出典</li>
+      <li>F. T. Wang &amp; C.-C. Hsiung, "A Theorem on the Tangram", <i>American Mathematical Monthly</i> 49 (1942) ― タングラムの凸多角形が13種であることの証明</li>
+      <li>W. Fox-Epstein, R. Uehara ほか, 清少納言知恵板の凸多角形についての研究（CCCG 2014／IEICE 2016）― 凸多角形がちょうど16種であることの証明</li>
+      <li>R. C. Read, <i>Tangrams: 1000 Puzzles</i>（Dover）</li>
+      <li>Sam Loyd, <i>The 8th Book of Tan</i>（Dover）</li>
+    </ul>
+  </section>
+</main>
+<footer>
+  知恵板工房 ― 古典パズルの形とルールは『数理パズル』（中公新書）を参考にしました。形の検証はすべて計算で行っています。<br>
+  不具合が出るかもしれません。実際にご使用の際に不具合がありましたら、noteのコメント欄からお知らせください。
+</footer>
+<div class="toast" id="toast"></div>
+<script>
+'use strict';
+const BOARDS = {"tangram":{"name":"タングラム","w":4,"h":4,"pieces":[{"id":"LT1","name":"大三角","poly":[[0,0],[4,0],[2,2]]},{"id":"LT2","name":"大三角","poly":[[0,0],[0,4],[2,2]]},{"id":"MT","name":"中三角","poly":[[2,4],[4,2],[4,4]]},{"id":"ST1","name":"小三角","poly":[[2,2],[3,1],[3,3]]},{"id":"ST2","name":"小三角","poly":[[0,4],[1,3],[2,4]]},{"id":"SQ","name":"正方形","poly":[[2,2],[3,3],[2,4],[1,3]]},{"id":"PG","name":"平行四辺形","poly":[[3,1],[4,0],[4,2],[3,3]]}]},"seisho":{"name":"清少納言知恵板","w":4,"h":4,"pieces":[{"id":"S1","name":"小三角","poly":[[0,0],[0,2],[1,1]]},{"id":"S2","name":"正方形","poly":[[1,1],[2,2],[1,3],[0,2]]},{"id":"S3","name":"三角","poly":[[0,2],[0,4],[2,4]]},{"id":"S4","name":"四角形","poly":[[1,3],[2,2],[4,4],[2,4]]},{"id":"S5","name":"大きな四角形","poly":[[0,0],[2,0],[3,1],[3,3]]},{"id":"S6","name":"平行四辺形","poly":[[3,1],[4,2],[4,4],[3,3]]},{"id":"S7","name":"三角","poly":[[2,0],[4,0],[4,2]]}]},"lucky":{"name":"ラッキー・パズル","w":5,"h":4,"pieces":[{"id":"L1","name":"三角","poly":[[0,0],[2,0],[0,2]]},{"id":"L2","name":"四角形","poly":[[2,0],[4,0],[2,2],[1,1]]},{"id":"L3","name":"長い四角形","poly":[[0,2],[1,1],[4,4],[2,4]]},{"id":"L4","name":"五角形","poly":[[2,2],[3,1],[5,1],[5,3],[3,3]]},{"id":"L5","name":"四角形","poly":[[4,0],[5,0],[5,1],[3,1]]},{"id":"L6","name":"四角形","poly":[[3,3],[5,3],[5,4],[4,4]]},{"id":"L7","name":"三角","poly":[[0,2],[0,4],[2,4]]}]},"simple":{"name":"簡単な知恵板","w":4,"h":4,"pieces":[{"id":"K1","name":"大三角","poly":[[0,0],[4,0],[2,2]]},{"id":"K2","name":"大三角","poly":[[0,0],[0,4],[2,2]]},{"id":"K3","name":"大三角","poly":[[4,0],[4,4],[2,2]]},{"id":"K4","name":"小三角","poly":[[0,4],[2,4],[2,2]]},{"id":"K5","name":"小三角","poly":[[2,4],[4,4],[2,2]]}]}};
+const ODAI = {"boards":{"tangram":{"name":"タングラム","w":4,"h":4,"home":{"name":"元の形","outline":[[0,0],[4,0],[4,4],[0,4]],"placed":[[[0,0],[4,0],[2,2]],[[0,0],[0,4],[2,2]],[[2,4],[4,2],[4,4]],[[2,2],[3,1],[3,3]],[[0,4],[1,3],[2,4]],[[2,2],[3,3],[2,4],[1,3]],[[3,1],[4,0],[4,2],[3,3]]]},"convex":[{"sides":5,"outline":[[-3,1],[-2,0],[4,0],[1,3],[-3,3]],"placed":[[[0,0],[4,0],[2,2]],[[1,1],[2,2],[1,3],[0,2]],[[1,1],[0,0],[-1,1]],[[-1,1],[0,0],[-2,0],[-3,1]],[[0,2],[1,1],[-1,1]],[[-3,3],[-1,1],[-3,1]],[[-3,3],[1,3],[-1,1]]]},{"sides":4,"outline":[[-1,-5],[4,0],[2,2],[-1,-1]],"placed":[[[0,0],[4,0],[2,2]],[[1,-1],[2,0],[0,0],[-1,-1]],[[1,-1],[0,-2],[-1,-1]],[[-1,-5],[-1,-1],[1,-3]],[[2,-2],[4,0],[2,0]],[[1,-1],[2,-2],[2,0]],[[2,-2],[1,-3],[0,-2],[1,-1]]]},{"sides":6,"outline":[[-1,-1],[1,-3],[4,0],[2,2],[0,2],[-1,1]],"placed":[[[0,0],[4,0],[2,2]],[[0,2],[-1,1],[1,1],[2,2]],[[4,0],[0,0],[2,-2]],[[0,0],[1,1],[-1,1]],[[0,-2],[1,-1],[2,-2],[1,-3]],[[1,-1],[0,-2],[-1,-1]],[[1,-1],[-1,1],[-1,-1]]]},{"sides":6,"outline":[[0,0],[2,-2],[4,0],[4,2],[2,4],[0,2]],"placed":[[[0,0],[4,0],[2,2]],[[2,2],[1,1],[1,3]],[[0,2],[1,3],[1,1],[0,0]],[[2,2],[1,3],[2,4],[3,3]],[[4,0],[0,0],[2,-2]],[[4,0],[2,2],[4,2]],[[2,2],[3,3],[4,2]]]},{"sides":4,"outline":[[0,0],[4,0],[4,2],[0,6]],"placed":[[[0,0],[4,0],[2,2]],[[0,0],[0,4],[2,2]],[[1,3],[2,2],[3,3]],[[3,1],[4,2],[4,0]],[[1,3],[0,4],[2,4],[3,3]],[[2,4],[0,6],[0,4]],[[3,3],[4,2],[3,1],[2,2]]]},{"sides":3,"outline":[[0,0],[8,0],[4,4]],"placed":[[[0,0],[4,0],[2,2]],[[4,0],[5,1],[3,1]],[[2,2],[3,3],[4,2],[3,1]],[[4,2],[3,1],[5,1],[6,2]],[[4,0],[8,0],[6,2]],[[6,2],[4,4],[4,2]],[[4,2],[3,3],[4,4]]]},{"sides":5,"outline":[[0,0],[4,0],[5,1],[1,5],[0,4]],"placed":[[[0,0],[4,0],[2,2]],[[0,0],[0,4],[2,2]],[[4,2],[5,1],[3,1],[2,2]],[[4,2],[2,4],[2,2]],[[1,3],[2,2],[2,4]],[[3,1],[4,0],[5,1]],[[1,3],[2,4],[1,5],[0,4]]]},{"sides":4,"outline":[[0,0],[4,0],[4,4],[0,4]],"placed":[[[0,0],[4,0],[2,2]],[[3,1],[4,0],[4,2],[3,3]],[[3,1],[2,2],[3,3]],[[2,2],[3,3],[2,4],[1,3]],[[0,0],[0,4],[2,2]],[[4,2],[2,4],[4,4]],[[1,3],[0,4],[2,4]]]},{"sides":4,"outline":[[0,-4],[4,0],[4,4],[0,0]],"placed":[[[0,0],[4,0],[2,2]],[[3,-1],[4,0],[2,0]],[[2,-2],[1,-1],[2,0],[3,-1]],[[4,0],[4,4],[2,2]],[[2,0],[0,-2],[0,0]],[[1,-3],[0,-4],[0,-2],[1,-1]],[[1,-1],[2,-2],[1,-3]]]},{"sides":4,"outline":[[-2,2],[0,0],[4,0],[-2,6]],"placed":[[[0,0],[4,0],[2,2]],[[-1,1],[0,0],[1,1]],[[0,2],[-1,1],[1,1],[2,2]],[[-2,2],[-1,3],[0,2],[-1,1]],[[-2,2],[-2,6],[0,4]],[[-1,3],[0,4],[0,2]],[[2,2],[0,4],[0,2]]]},{"sides":4,"outline":[[0,0],[2,-2],[6,2],[4,4]],"placed":[[[0,0],[4,0],[2,2]],[[2,2],[3,3],[3,1]],[[3,1],[4,0],[4,2],[3,3]],[[3,3],[4,4],[5,3],[4,2]],[[4,0],[0,0],[2,-2]],[[4,0],[6,2],[4,2]],[[4,2],[5,3],[6,2]]]},{"sides":6,"outline":[[-1,1],[0,0],[4,0],[6,2],[5,3],[1,3]],"placed":[[[0,0],[4,0],[2,2]],[[6,2],[2,2],[4,0]],[[0,2],[-1,1],[0,0],[1,1]],[[2,2],[3,3],[4,2]],[[0,2],[1,3],[1,1]],[[5,3],[6,2],[4,2],[3,3]],[[1,1],[3,3],[1,3]]]},{"sides":6,"outline":[[0,0],[3,-3],[5,-3],[5,-1],[2,2],[0,2]],"placed":[[[0,0],[4,0],[2,2]],[[0,0],[2,2],[0,2]],[[4,0],[0,0],[2,-2]],[[2,-2],[3,-1],[4,-2],[3,-3]],[[3,-3],[4,-2],[5,-3]],[[3,-1],[4,0],[4,-2]],[[4,-2],[5,-3],[5,-1],[4,0]]]}],"silhouettes":[]},"seisho":{"name":"清少納言知恵板","w":4,"h":4,"home":{"name":"元の形","outline":[[0,0],[4,0],[4,4],[0,4]],"placed":[[[0,0],[0,2],[1,1]],[[1,1],[2,2],[1,3],[0,2]],[[0,2],[0,4],[2,4]],[[1,3],[2,2],[4,4],[2,4]],[[0,0],[2,0],[3,1],[3,3]],[[3,1],[4,2],[4,4],[3,3]],[[2,0],[4,0],[4,2]]]},"convex":[{"sides":5,"outline":[[-3,-1],[-2,-2],[2,2],[1,3],[-3,3]],"placed":[[[0,0],[0,2],[1,1]],[[0,2],[0,0],[-2,0]],[[-3,-1],[-2,-2],[0,0],[-2,0]],[[-3,-1],[-2,0],[-2,2],[-3,1]],[[1,3],[0,2],[1,1],[2,2]],[[1,3],[-1,3],[-2,2],[-2,0]],[[-3,1],[-3,3],[-1,3]]]},{"sides":5,"outline":[[0,-2],[2,-2],[3,-1],[3,5],[0,2]],"placed":[[[0,0],[0,2],[1,1]],[[1,1],[0,2],[1,3],[2,2]],[[2,2],[3,1],[1,-1],[1,1]],[[0,-2],[1,-1],[1,1],[0,0]],[[0,-2],[2,-2],[3,-1],[3,1]],[[1,3],[3,3],[3,1]],[[1,3],[3,3],[3,5]]]},{"sides":4,"outline":[[-2,2],[2,-2],[4,0],[0,4]],"placed":[[[0,0],[0,2],[1,1]],[[0,4],[0,2],[1,1],[3,1]],[[2,0],[1,-1],[0,0],[1,1]],[[0,4],[0,2],[-2,2]],[[-2,2],[0,2],[0,0]],[[1,1],[2,0],[4,0],[3,1]],[[1,-1],[2,-2],[4,0],[2,0]]]},{"sides":6,"outline":[[-5,1],[-4,0],[0,0],[2,2],[1,3],[-3,3]],"placed":[[[0,0],[0,2],[1,1]],[[0,2],[0,0],[-2,0]],[[1,3],[0,2],[1,1],[2,2]],[[-2,0],[-2,2],[-1,3],[1,3]],[[-4,2],[-3,3],[-1,3],[-2,2]],[[-4,0],[-2,0],[-2,2]],[[-5,1],[-4,0],[-2,2],[-4,2]]]},{"sides":3,"outline":[[-4,4],[0,0],[4,4]],"placed":[[[0,0],[0,2],[1,1]],[[2,2],[1,1],[0,2],[1,3]],[[0,0],[-1,1],[-1,3],[0,2]],[[-2,4],[0,4],[0,2]],[[-4,4],[-2,4],[-1,3],[-1,1]],[[1,3],[2,2],[4,4],[2,4]],[[2,4],[0,4],[0,2]]]},{"sides":4,"outline":[[-3,-1],[1,-1],[4,2],[2,4]],"placed":[[[0,0],[0,2],[1,1]],[[2,2],[1,3],[0,2],[1,1]],[[0,2],[-1,1],[-1,-1],[0,0]],[[-3,-1],[-1,-1],[-1,1]],[[1,3],[2,4],[4,2],[2,2]],[[-1,-1],[1,-1],[1,1]],[[4,2],[2,2],[1,1],[1,-1]]]},{"sides":4,"outline":[[0,0],[4,-4],[4,0],[0,4]],"placed":[[[0,0],[0,2],[1,1]],[[1,-1],[2,0],[1,1],[0,0]],[[3,1],[2,2],[0,2],[1,1]],[[1,-1],[2,0],[4,-2],[2,-2]],[[1,1],[3,1],[4,0],[4,-2]],[[4,-4],[4,-2],[2,-2]],[[0,4],[0,2],[2,2]]]},{"sides":4,"outline":[[0,-2],[6,-2],[2,2],[0,2]],"placed":[[[0,0],[0,2],[1,1]],[[1,-1],[2,0],[1,1],[0,0]],[[3,1],[2,2],[0,2],[1,1]],[[1,-1],[2,0],[4,-2],[2,-2]],[[2,-2],[0,-2],[0,0]],[[3,-1],[3,1],[1,1]],[[3,1],[3,-1],[4,-2],[6,-2]]]},{"sides":6,"outline":[[-3,-1],[-1,-3],[1,-3],[2,-2],[2,0],[0,2]],"placed":[[[0,0],[0,2],[1,1]],[[0,2],[0,0],[-1,-1],[-3,-1]],[[1,1],[0,0],[1,-1],[2,0]],[[-3,-1],[-1,-1],[-1,-3]],[[0,0],[-1,-1],[1,-3],[1,-1]],[[-1,-1],[-1,-3],[1,-3]],[[2,0],[1,-1],[1,-3],[2,-2]]]},{"sides":4,"outline":[[-4,-2],[0,-2],[2,0],[2,4]],"placed":[[[0,0],[0,2],[1,1]],[[0,2],[-1,1],[-1,-1],[0,0]],[[2,0],[1,1],[0,0],[1,-1]],[[0,2],[2,2],[2,0]],[[-4,-2],[-2,-2],[-1,-1],[-1,1]],[[1,-1],[0,0],[-2,-2],[0,-2]],[[2,4],[2,2],[0,2]]]},{"sides":4,"outline":[[-3,3],[5,-5],[5,-3],[-3,5]],"placed":[[[0,0],[0,2],[1,1]],[[-2,2],[0,2],[0,0]],[[-2,4],[-2,2],[0,2]],[[2,0],[1,-1],[0,0],[1,1]],[[1,-1],[2,0],[4,-2],[2,-2]],[[2,-2],[4,-2],[5,-3],[5,-5]],[[-3,5],[-2,4],[-2,2],[-3,3]]]},{"sides":4,"outline":[[0,-2],[4,-2],[4,2],[0,2]],"placed":[[[0,0],[0,2],[1,1]],[[2,0],[1,1],[0,0],[1,-1]],[[0,2],[2,2],[3,1],[3,-1]],[[3,1],[4,0],[4,-2],[3,-1]],[[1,-1],[2,0],[4,-2],[2,-2]],[[2,2],[4,2],[4,0]],[[0,0],[0,-2],[2,-2]]]},{"sides":4,"outline":[[-7,7],[1,-1],[2,0],[-6,8]],"placed":[[[0,0],[0,2],[1,1]],[[2,0],[1,-1],[0,0],[1,1]],[[-2,2],[0,2],[0,0]],[[0,2],[-2,2],[-2,4]],[[-2,2],[-2,4],[-3,5],[-5,5]],[[-3,5],[-4,6],[-6,6],[-5,5]],[[-7,7],[-6,8],[-4,6],[-6,6]]]},{"sides":6,"outline":[[-3,3],[0,0],[2,0],[2,2],[-1,5],[-3,5]],"placed":[[[0,0],[0,2],[1,1]],[[1,1],[2,2],[1,3],[0,2]],[[2,2],[2,0],[0,0]],[[1,3],[0,2],[-2,4],[0,4]],[[-3,5],[-3,3],[-2,2],[0,2]],[[-2,2],[0,2],[0,0]],[[-3,5],[-2,4],[0,4],[-1,5]]]},{"sides":6,"outline":[[-2,2],[0,0],[2,0],[4,2],[2,4],[0,4]],"placed":[[[0,0],[0,2],[1,1]],[[3,1],[1,1],[0,2],[0,4]],[[3,3],[2,2],[0,4],[2,4]],[[0,0],[1,1],[3,1],[2,0]],[[4,2],[3,1],[2,2],[3,3]],[[-2,2],[0,2],[0,0]],[[0,4],[0,2],[-2,2]]]},{"sides":4,"outline":[[-4,-2],[-2,-2],[5,5],[5,7]],"placed":[[[0,0],[0,2],[1,1]],[[1,3],[2,2],[1,1],[0,2]],[[-1,-1],[0,0],[0,2],[-1,1]],[[2,2],[1,3],[3,5],[3,3]],[[3,3],[3,5],[5,5]],[[-4,-2],[-2,-2],[-1,-1],[-1,1]],[[5,7],[5,5],[3,5]]]}],"silhouettes":[]},"lucky":{"name":"ラッキー・パズル","w":5,"h":4,"home":{"name":"元の形","outline":[[0,0],[5,0],[5,4],[0,4]],"placed":[[[0,0],[2,0],[0,2]],[[2,0],[4,0],[2,2],[1,1]],[[0,2],[1,1],[4,4],[2,4]],[[2,2],[3,1],[5,1],[5,3],[3,3]],[[4,0],[5,0],[5,1],[3,1]],[[3,3],[5,3],[5,4],[4,4]],[[0,2],[0,4],[2,4]]]},"convex":[],"silhouettes":[]},"simple":{"name":"簡単な知恵板","w":4,"h":4,"home":{"name":"元の形","outline":[[0,0],[4,0],[4,4],[0,4]],"placed":[[[0,0],[4,0],[2,2]],[[0,0],[0,4],[2,2]],[[4,0],[4,4],[2,2]],[[0,4],[2,4],[2,2]],[[2,4],[4,4],[2,2]]]},"convex":[],"silhouettes":[]}}};
+
+/* ================= 幾何ヘルパー ================= */
+const SQ2 = Math.SQRT2;
+function polyArea(p){let s=0;for(let i=0;i<p.length;i++){const a=p[i],b=p[(i+1)%p.length];s+=a[0]*b[1]-b[0]*a[1];}return s/2;}
+function centroid(p){let x=0,y=0;for(const v of p){x+=v[0];y+=v[1];}return [x/p.length,y/p.length];}
+function pip(pt, poly){
+  let inside=false;
+  for(let i=0,j=poly.length-1;i<poly.length;j=i++){
+    const xi=poly[i][0], yi=poly[i][1], xj=poly[j][0], yj=poly[j][1];
+    if((yi>pt[1])!==(yj>pt[1])){ const xint=xi+(pt[1]-yi)/(yj-yi)*(xj-xi); if(pt[0]<xint) inside=!inside; }
+  }
+  return inside;
+}
+function bbox(poly){let a=[1e9,1e9],b=[-1e9,-1e9];for(const v of poly){a[0]=Math.min(a[0],v[0]);a[1]=Math.min(a[1],v[1]);b[0]=Math.max(b[0],v[0]);b[1]=Math.max(b[1],v[1]);}return{a,b,w:b[0]-a[0],h:b[1]-a[1]};}
+function latticeSnap(v){
+  let best=v, bd=1e9;
+  for(let b=-24;b<=24;b++){
+    const a=Math.round(v*4-b*SQ2);
+    const val=(a+b*SQ2)/4, d=Math.abs(val-v);
+    if(d<bd){bd=d;best=val;}
+  }
+  return bd<=0.09?best:v;
+}
+
+/* ================= 状態 ================= */
+const COLORS=['#e4572e','#f2a541','#2e9e8b','#7fb069','#577590','#9b5de5','#ef476f'];
+const S={
+  board:'tangram', mode:'free', odaiIdx:0, chalIdx:-1,
+  pieces:[], sel:-1, snap:true, showSol:false,
+  view:{x0:0,y0:0,w:5,h:5}, target:null, targetShift:[0,0], kitPdf:null, kitName:'',
+  theme:(()=>{ try{ return localStorage.getItem('ck-theme')||'color'; }catch(_){ return 'color'; } })(),
+  kitStyle:'mono',
+};
+const $=id=>document.getElementById(id);
+const svgNS='http://www.w3.org/2000/svg';
+function svgEl(tag, attrs, parent){
+  const e=document.createElementNS(svgNS,tag);
+  for(const k in attrs) e.setAttribute(k, attrs[k]);
+  if(parent) parent.appendChild(e);
+  return e;
+}
+let AC=null;
+function beep(freq, dur, type='sine', vol=0.12, when=0){
+  try{
+    AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+    const o=AC.createOscillator(), g=AC.createGain();
+    o.type=type; o.frequency.value=freq;
+    const t=AC.currentTime+when;
+    g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+    o.connect(g).connect(AC.destination); o.start(t); o.stop(t+dur);
+  }catch(_){}
+}
+const snd={
+  pick(){beep(620,.07,'sine',.08);},
+  drop(){beep(320,.09,'sine',.10);},
+  rot(){beep(500,.05,'square',.05);},
+  flip(){beep(760,.06,'triangle',.09);},
+  bad(){beep(150,.18,'sawtooth',.07);},
+  clear(){[523,659,784,1047,1319].forEach((f,i)=>beep(f,.16,'sine',.11,i*.09));},
+};
+let toastTimer=null;
+function toast(msg){
+  const t=$('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2400);
+}
+function confetti(){
+  const box=document.createElement('div'); box.className='confetti';
+  for(let i=0;i<28;i++){
+    const d=document.createElement('i');
+    d.style.left=(Math.random()*100)+'vw';
+    d.style.background=COLORS[i%COLORS.length];
+    d.style.animationDuration=(1.1+Math.random()*0.9)+'s';
+    d.style.animationDelay=(Math.random()*0.25)+'s';
+    box.appendChild(d);
+  }
+  document.body.appendChild(box);
+  setTimeout(()=>box.remove(),2600);
+}
+
+/* ================= ピース ================= */
+function makePieces(boardKey){
+  const B=BOARDS[boardKey];
+  return B.pieces.map((p,i)=>{
+    const c=centroid(p.poly);
+    return { id:p.id, name:p.name, color:COLORS[i%COLORS.length],
+      local:p.poly.map(v=>[v[0]-c[0], v[1]-c[1]]), homeC:c,
+      pos:[c[0],c[1]], rot:0, flip:false };
+  });
+}
+function pieceWorld(pc){
+  const th=pc.rot*Math.PI/180, co=Math.cos(th), si=Math.sin(th);
+  return pc.local.map(([x,y])=>{
+    const fx=pc.flip?-x:x;
+    return [pc.pos[0]+fx*co-y*si, pc.pos[1]+fx*si+y*co];
+  });
+}
+function xformPoly(poly, shift){ return poly.map(v=>[v[0]+shift[0], v[1]+shift[1]]); }
+
+/* ビュー（数学座標→SVG座標） */
+function X(x){ return (x-S.view.x0)/S.view.w*1000; }
+function Y(y){ return (S.view.y0+S.view.h-y)/S.view.h*1000; }
+function toMath(ev){
+  const r=$('stage').getBoundingClientRect();
+  return [ S.view.x0+(ev.clientX-r.left)/r.width*S.view.w,
+           S.view.y0+S.view.h-(ev.clientY-r.top)/r.height*S.view.h ];
+}
+function setView(minX, minY, maxX, maxY){
+  S.view={x0:minX, y0:minY, w:maxX-minX, h:maxY-minY};
+  const st=$('stage');
+  st.setAttribute('viewBox', `0 0 1000 ${Math.round(1000*S.view.h/S.view.w)}`);
+}
+
+/* トレイ配置：ピースを遊び場の下に並べる */
+function trayLayout(pieces, playMinX, playMaxX, playMinY){
+  const rowH=2.35; let x=playMinX, yTop=playMinY-0.75, rowMaxBottom=yTop;
+  const placed=[];
+  for(const pc of pieces){
+    const bb=bbox(pieceWorldAt(pc,[0,0],0,false));
+    const wdt=bb.w+0.42;
+    if(x+wdt>playMaxX+0.4 && x>playMinX){ x=playMinX; yTop-=rowH; }
+    const pos=[x-bb.a[0]+0.1, yTop-bb.b[1]];
+    placed.push(pos);
+    x+=wdt; rowMaxBottom=Math.min(rowMaxBottom, yTop-rowH+0.5);
+  }
+  return {placed, bottom: yTop-rowH+0.35};
+}
+function pieceWorldAt(pc, pos, rot, flip){
+  const save={pos:pc.pos, rot:pc.rot, flip:pc.flip};
+  pc.pos=pos; pc.rot=rot; pc.flip=flip;
+  const w=pieceWorld(pc);
+  pc.pos=save.pos; pc.rot=save.rot; pc.flip=save.flip;
+  return w;
+}
+
+/* ================= シーン構築 ================= */
+function currentOdaiList(){
+  const d=ODAI.boards[S.board]; const list=[];
+  list.push({kind:'home', name:'元の形', outline:d.home.outline, placed:d.home.placed});
+  for(const s of d.silhouettes) list.push({kind:'sil', name:s.name, outline:s.outline, placed:s.placed});
+  return list;
+}
+function setupScene(){
+  S.pieces=makePieces(S.board);
+  S.sel=-1; S.showSol=false; $('answer-btn').textContent='こたえを見る';
+  const B=BOARDS[S.board];
+  if(S.mode==='free'){
+    S.target=null;
+    for(const pc of S.pieces){ pc.pos=[pc.homeC[0], pc.homeC[1]]; pc.rot=0; pc.flip=false; }
+    setView(-0.55, -0.55, B.w+0.55, B.h+0.55);
+    setMsg('フリー：好きな形を作ってみましょう。ピースは全部で'+S.pieces.length+'つです。');
+  }else{
+    let item=null;
+    if(S.mode==='odai'){ const list=currentOdaiList(); item=list[Math.min(S.odaiIdx, list.length-1)]; }
+    else { const d=ODAI.boards[S.board]; item=d.convex[S.chalIdx]; }
+    if(!item){ S.target=null; render(); return; }
+    const ob=bbox(item.outline);
+    const shift=[-ob.a[0]+(Math.max(B.w,ob.w)-ob.w)/2, -ob.a[1]+(Math.max(B.h,ob.h)-ob.h)/2];
+    S.targetShift=shift;
+    S.target={ outline:xformPoly(item.outline, shift), placed:item.placed.map(p=>xformPoly(p, shift)), name:item.name };
+    const pb=bbox(S.target.outline);
+    const {placed, bottom}=trayLayout(S.pieces, pb.a[0], pb.b[0], pb.a[1]);
+    S.pieces.forEach((pc,i)=>{ pc.pos=placed[i]; pc.rot=0; pc.flip=false; });
+    setView(pb.a[0]-0.55, bottom-0.3, pb.b[0]+0.55, pb.b[1]+0.55);
+    setMsg('お題「'+item.name+'」：下のピースを全部、点線の形の中に入れてみましょう。');
+  }
+  render();
+}
+function setMsg(t){ $('msg').textContent=t; }
+
+/* ================= 描画 ================= */
+const PATTERNS=[
+  (id,base,k)=>{ const w=0.55*k; return '<pattern id="'+id+'" width="'+w+'" height="'+w+'" patternUnits="userSpaceOnUse"><rect width="'+w+'" height="'+w+'" fill="'+base+'"/><path d="M'+(-0.14*k)+','+(0.14*k)+' L'+(0.14*k)+','+(-0.14*k)+' M0,'+w+' L'+w+',0 M'+(0.41*k)+','+(0.69*k)+' L'+(0.69*k)+','+(0.41*k)+'" stroke="rgba(255,255,255,.55)" stroke-width="'+(0.09*k)+'"/></pattern>'; },
+  (id,base,k)=>{ const w=0.5*k; return '<pattern id="'+id+'" width="'+w+'" height="'+w+'" patternUnits="userSpaceOnUse"><rect width="'+w+'" height="'+w+'" fill="'+base+'"/><circle cx="'+(0.13*k)+'" cy="'+(0.13*k)+'" r="'+(0.075*k)+'" fill="rgba(255,255,255,.6)"/><circle cx="'+(0.38*k)+'" cy="'+(0.38*k)+'" r="'+(0.075*k)+'" fill="rgba(0,0,0,.16)"/></pattern>'; },
+  (id,base,k)=>{ const w=0.55*k, h=0.44*k; return '<pattern id="'+id+'" width="'+w+'" height="'+h+'" patternUnits="userSpaceOnUse"><rect width="'+w+'" height="'+h+'" fill="'+base+'"/><rect y="'+(0.11*k)+'" width="'+w+'" height="'+(0.1*k)+'" fill="rgba(255,255,255,.5)"/><rect y="'+(0.33*k)+'" width="'+w+'" height="'+(0.1*k)+'" fill="rgba(0,0,0,.13)"/></pattern>'; },
+  (id,base,k)=>{ const w=0.46*k; return '<pattern id="'+id+'" width="'+w+'" height="'+w+'" patternUnits="userSpaceOnUse"><rect width="'+w+'" height="'+w+'" fill="'+base+'"/><path d="M0,0 H'+w+' M0,0 V'+w+'" stroke="rgba(255,255,255,.55)" stroke-width="'+(0.07*k)+'"/></pattern>'; },
+  (id,base,k)=>{ const w=0.44*k, h=0.55*k; return '<pattern id="'+id+'" width="'+w+'" height="'+h+'" patternUnits="userSpaceOnUse"><rect width="'+w+'" height="'+h+'" fill="'+base+'"/><rect x="'+(0.11*k)+'" width="'+(0.1*k)+'" height="'+h+'" fill="rgba(0,0,0,.15)"/><rect x="'+(0.33*k)+'" width="'+(0.1*k)+'" height="'+h+'" fill="rgba(255,255,255,.5)"/></pattern>'; },
+  (id,base,k)=>{ const w=0.6*k, h=0.34*k; return '<pattern id="'+id+'" width="'+w+'" height="'+h+'" patternUnits="userSpaceOnUse"><rect width="'+w+'" height="'+h+'" fill="'+base+'"/><path d="M0,'+(0.24*k)+' L'+(0.15*k)+','+(0.08*k)+' L'+(0.3*k)+','+(0.24*k)+' L'+(0.45*k)+','+(0.08*k)+' L'+w+','+(0.24*k)+'" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="'+(0.07*k)+'"/></pattern>'; },
+  (id,base,k)=>{ const w=0.52*k; return '<pattern id="'+id+'" width="'+w+'" height="'+w+'" patternUnits="userSpaceOnUse"><rect width="'+w+'" height="'+w+'" fill="'+base+'"/><circle cx="'+(0.26*k)+'" cy="'+(0.26*k)+'" r="'+(0.13*k)+'" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="'+(0.06*k)+'"/><circle cx="'+(0.26*k)+'" cy="'+(0.26*k)+'" r="'+(0.035*k)+'" fill="rgba(0,0,0,.18)"/></pattern>'; },
+];
+function fillFor(i){
+  if(S.theme==='black') return '#38322a';
+  if(S.theme==='pattern') return 'url(#pat'+i+')';
+  return COLORS[i%COLORS.length];
+}
+function render(){
+  const st=$('stage'); st.innerHTML='';
+  if(S.theme==='pattern'){
+    const defs=svgEl('defs',{},st);
+    const k=1000/S.view.w;
+    defs.innerHTML=COLORS.map((c,i)=>PATTERNS[i%PATTERNS.length]('pat'+i, c, k)).join('');
+  }
+  const B=BOARDS[S.board];
+  // 盤面の枠（フリー）／お題の輪郭
+  if(S.mode==='free'){
+    const g=svgEl('g',{},st);
+    svgEl('rect',{x:X(0), y:Y(B.h), width:X(B.w)-X(0), height:Y(0)-Y(B.h), fill:'rgba(179,84,30,.06)', stroke:'#c9b892', 'stroke-width':2},g);
+  }
+  if(S.target){
+    const pts=S.target.outline.map(v=>X(v[0])+','+Y(v[1])).join(' ');
+    svgEl('polygon',{points:pts, class:'target-outline'},st);
+    if(S.showSol){
+      const g=svgEl('g',{},st);
+      for(const p of S.target.placed) svgEl('polygon',{points:p.map(v=>X(v[0])+','+Y(v[1])).join(' '), class:'sol-poly'},g);
+    }
+  }
+  // ピース（選択中を最後＝最前面に）
+  const order=S.pieces.map((_,i)=>i).sort((a,b)=>(a===S.sel?1:0)-(b===S.sel?1:0));
+  for(const i of order){
+    const pc=S.pieces[i], w=pieceWorld(pc);
+    const g=svgEl('g',{class:'piece'+(i===S.sel?' sel':'')},st);
+    const poly=svgEl('polygon',{points:w.map(v=>X(v[0])+','+Y(v[1])).join(' '), class:'body', fill:fillFor(i)},g);
+    poly.dataset.idx=i;
+    g.addEventListener('pointerdown', ev=>onPieceDown(ev, i));
+    g.addEventListener('dblclick', ev=>{ ev.preventDefault(); select(i); rotateSel(45); });
+  }
+}
+function select(i){ S.sel=i; render(); refreshTools(); }
+function refreshTools(){
+  const dis=S.sel<0;
+  for(const id of ['rot-l','rot-r','rot-l5','rot-r5','flip-btn']) $(id).disabled=dis;
+}
+
+/* ================= ドラッグ（受け手は window 側） ================= */
+let drag=null;
+function onPieceDown(ev, i){
+  ev.preventDefault();
+  select(i);
+  const m=toMath(ev), pc=S.pieces[i];
+  drag={ i, dx:pc.pos[0]-m[0], dy:pc.pos[1]-m[1], moved:false, lastTap:(drag&&drag.lastTap)||0 };
+  snd.pick();
+}
+window.addEventListener('pointermove', ev=>{
+  if(!drag) return;
+  const m=toMath(ev), pc=S.pieces[drag.i];
+  pc.pos=[m[0]+drag.dx, m[1]+drag.dy];
+  drag.moved=true;
+  render();
+});
+window.addEventListener('pointerup', ()=>{
+  if(!drag) return;
+  const pc=S.pieces[drag.i];
+  if(S.snap && drag.moved){
+    pc.rot=Math.round(pc.rot/45)*45;
+    pc.pos=[latticeSnap(pc.pos[0]), latticeSnap(pc.pos[1])];
+    render();
+  }
+  if(drag.moved) snd.drop();
+  drag=null;
+});
+window.addEventListener('pointercancel', ()=>{ drag=null; });
+
+function rotateSel(deg){
+  if(S.sel<0) return;
+  const pc=S.pieces[S.sel]; pc.rot=(pc.rot+deg)%360; snd.rot(); render();
+}
+function flipSel(){
+  if(S.sel<0) return;
+  S.pieces[S.sel].flip=!S.pieces[S.sel].flip; snd.flip(); render();
+}
+
+/* ================= 判定（サンプリング） ================= */
+function judge(){
+  if(!S.target) return;
+  const T=S.target.outline, tb=bbox(T), step=0.09;
+  const worlds=S.pieces.map(pieceWorld);
+  let inT=0, covered=0, overlapped=0;
+  for(let x=tb.a[0]+step/2;x<tb.b[0];x+=step) for(let y=tb.a[1]+step/2;y<tb.b[1];y+=step){
+    if(!pip([x,y],T)) continue;
+    inT++;
+    let c=0; for(const w of worlds) if(pip([x,y],w)) c++;
+    if(c>=1) covered++;
+    if(c>=2) overlapped++;
+  }
+  let pieceOut=0, pieceAll=0;
+  for(const w of worlds){
+    const b=bbox(w);
+    for(let x=b.a[0]+step/2;x<b.b[0];x+=step) for(let y=b.a[1]+step/2;y<b.b[1];y+=step){
+      if(!pip([x,y],w)) continue;
+      pieceAll++; if(!pip([x,y],T)) pieceOut++;
+    }
+  }
+  const cov=inT?covered/inT:0, ovl=inT?overlapped/inT:0, out=pieceAll?pieceOut/pieceAll:0;
+  if(cov>=0.995 && ovl<=0.004 && out<=0.005){
+    snd.clear(); confetti();
+    setMsg('🎉 できました！「'+S.target.name+'」が完成です。');
+    markClear();
+  }else{
+    snd.bad();
+    const hints=[];
+    if(out>0.005) hints.push('はみ出しているピースがあります');
+    if(ovl>0.004) hints.push('重なっているところがあります');
+    if(cov<0.995) hints.push('まだ空いているところがあります');
+    setMsg('もう少しです。'+hints.join('。')+'。');
+  }
+}
+function clearKey(){
+  if(S.mode==='odai') return 'ck-'+S.board+'-odai-'+S.odaiIdx;
+  if(S.mode==='chal') return 'ck-'+S.board+'-chal-'+S.chalIdx;
+  return null;
+}
+function markClear(){
+  const k=clearKey(); if(!k) return;
+  try{ localStorage.setItem(k,'1'); }catch(_){}
+  buildChips(); buildChallenge();
+}
+function isClear(k){ try{ return localStorage.getItem(k)==='1'; }catch(_){ return false; } }
+
+/* ================= UI 構築 ================= */
+function buildBoards(){
+  const g=$('board-grid'); g.innerHTML='';
+  for(const key of Object.keys(BOARDS)){
+    const B=BOARDS[key], d=ODAI.boards[key];
+    const b=document.createElement('button');
+    b.type='button'; b.className='board-btn'; b.setAttribute('aria-pressed', S.board===key?'true':'false');
+    const chal = d.convex.length? '／凸多角形 '+d.convex.length+'種を確認' : '';
+    b.innerHTML='<span class="bn">'+B.name+'</span><span class="bs">'+B.pieces.length+'ピース'+chal+'</span>';
+    b.addEventListener('click', ()=>{ S.board=key; S.odaiIdx=0; S.chalIdx=-1; buildBoards(); buildChips(); buildChallenge(); setupScene(); syncModeUI(); });
+    g.appendChild(b);
+  }
+}
+function buildChips(){
+  const wrap=$('odai-chips'); wrap.innerHTML='';
+  currentOdaiList().forEach((item, i)=>{
+    const c=document.createElement('button');
+    c.type='button'; c.className='chip'; c.setAttribute('aria-pressed', S.odaiIdx===i?'true':'false');
+    const done=isClear('ck-'+S.board+'-odai-'+i)? ' <span class="done">✓できた</span>':'';
+    c.innerHTML=item.name+done;
+    c.addEventListener('click', ()=>{ S.odaiIdx=i; buildChips(); setupScene(); });
+    wrap.appendChild(c);
+  });
+}
+function thumbSVG(outline){
+  const b=bbox(outline), pad=0.25;
+  const w=b.w+pad*2, h=b.h+pad*2;
+  const pts=outline.map(v=>((v[0]-b.a[0]+pad)/w*100)+','+(100-(v[1]-b.a[1]+pad)/h*100)).join(' ');
+  return '<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><polygon points="'+pts+'" fill="rgba(179,84,30,.18)" stroke="#8a6d3b" stroke-width="2"/></svg>';
+}
+function sideName(n){ return {3:'三角形',4:'四角形',5:'五角形',6:'六角形',7:'七角形',8:'八角形'}[n]||(n+'角形'); }
+function buildChallenge(){
+  const d=ODAI.boards[S.board], card=$('chal-card'), grid=$('chal-grid'), note=$('chal-note');
+  if(!d.convex.length){ card.style.display='none'; return; }
+  card.style.display='';
+  grid.innerHTML='';
+  let doneN=0;
+  d.convex.forEach((cv, i)=>{
+    const done=isClear('ck-'+S.board+'-chal-'+i); if(done) doneN++;
+    const b=document.createElement('button');
+    b.type='button'; b.className='chal';
+    b.innerHTML=thumbSVG(cv.outline)+'<span class="cn">'+sideName(cv.outline.length)+' '+(i+1)+'</span><span class="cd">'+(done?'✓ できた':'')+'</span>';
+    b.addEventListener('click', ()=>{ setModeUI('chal'); S.chalIdx=i; setupScene(); $('stage-wrap').scrollIntoView({block:'center', behavior:'smooth'}); });
+    grid.appendChild(b);
+  });
+  if(S.board==='tangram'){
+    note.textContent='タングラムで作れる凸多角形は、全部で13種だけ――1942年に証明された有名な結果です。この13種すべてに、実際にピースを並べた解を確認してあります（'+doneN+'/13 達成）。';
+  }else if(S.board==='seisho'){
+    note.textContent='清少納言知恵板で作れる凸多角形は、ちょうど'+d.convex.length+'種――2014年の研究（Fox-Epstein＆Uehara）で証明された確定値です。この工房でも、コンピュータの探索で独立に同じ'+d.convex.length+'種にたどり着き、すべてに解を確認してあります（'+doneN+'/'+d.convex.length+' 達成）。古い本にある「19種」は、その研究者たちが別に提案した新しいパズルの数字が混ざったものでした。';
+  }
+}
+function setModeUI(mode){
+  S.mode=mode;
+  for(const m of ['free','odai','chal']) $('mode-'+m).setAttribute('aria-pressed', mode===m?'true':'false');
+  $('odai-picker').style.display = mode==='odai'?'':'none';
+  $('answer-btn').style.display = mode==='free'?'none':'';
+  $('judge-btn').style.display = mode==='free'?'none':'';
+}
+function syncModeUI(){
+  const d=ODAI.boards[S.board];
+  $('mode-chal').style.display = d.convex.length?'':'none';
+  if(S.mode==='chal' && !d.convex.length) setModeUI('free');
+  else setModeUI(S.mode);
+}
+
+/* ================= コラム（本文はオリジナル） ================= */
+function buildColumn(){
+  $('column-body').innerHTML=`
+  <h3>タングラム ― 13種しかない凸多角形</h3>
+  <p>タングラムは中国で生まれ、19世紀にヨーロッパやアメリカへ広がった7片のパズルです。正方形を7つに切り分け、動物や人や物の形を作って遊びます。ところが「凸多角形」（へこみのない多角形）は、全部のピースを使っても<b>13種しか作れません</b>。このことは1942年に数学的に証明された有名な結果です。この工房の13種は、すべて実際にピースを並べて確かめたものです。</p>
+  <h3>清少納言知恵板 ― 江戸時代の影絵パズル</h3>
+  <p>1742年（寛保2年）、『清少納言知恵板』という本が出ました。清少納言の名を借りた日本の知恵板で、ろうそくの明かりで影絵を作るような遊び方が楽しまれてきました。タングラムでは作れない「真ん中に穴のあいた形」（釘貫）が作れることでも知られます。凸多角形は、2014年の研究（Fox-Epstein＆Uehara）で<b>ちょうど16種</b>と証明されました。この工房の探索でも、独立に同じ16種にたどり着きました。古い本にある「19種」という数字は、その研究者たちが新たに提案した別のパズルについてのものでした。</p>
+  <h3>ラッキー・パズルと簡単な知恵板</h3>
+  <p>この2つは、高木茂男・中村義作『数理パズル』（中公新書）で紹介された知恵板です。ラッキー・パズルは長方形から7片、簡単な知恵板は正方形の対角線と1本の線だけで5片。切り方が単純なのに、意外な形が生まれます。</p>
+  <h3>和久井静夫の問題 ― 本の中に残る「分からない」</h3>
+  <p>『数理パズル』には、和久井静夫さんが1968年に出したという問題が紹介されています。正方形をある方法で細かく切って並べ替えると、凸多角形が何種できるでしょう。同書によれば、少なくとも233種できることは分かっていますが、全部で何種かは分かっていません。この問題が解かれたという報告は、その後も見つかっていません（2026年11月時点）。本の中の問題として、「分からない」のまま残されているのです。</p>
+  <h3>検証の話 ― AIにとっても手ごわい課題でした</h3>
+  <p>この工房の形は、コンピュータでピースを並べる探索と、並んだ形を厳密に照合する検証によって確かめています。正直にお伝えすると、これはAI（この工房づくりを手伝ったAI）にとっても簡単な仕事ではありませんでした。ピースを「ちょうど」埋める並べ方を探すのは根気のいる探索で、「凸多角形が何種あるか」の数え方では、同じ形を二重に数えたり、別の形を同じものとみなしたりして、何度も数え直しになりました。最後は、辺の長さと折れ曲がる角度の並びで形を同一視する厳密な方法にたどり着き、タングラムは証明済みの13種と一致することを確かめました。</p>
+  <p>清少納言知恵板では、本にあった「19種」という数字を追いかけて、数の食い違いに長く悩まされました。厳密な数え方でようやく16種に落ち着いたあとで調べ直すと、2014年の査読研究（Fox-Epstein＆Uehara）が、清少納言知恵板の凸多角形はちょうど16種と証明していたのです。私たちの探索は、その証明値に独立にたどり着いたことになります。「19種」は、研究者たちが別に提案した新しいパズルの数字でした。本の数字を疑い、自分の手で数え直し、最後に研究と突き合わせる――その手間を省かなかったからこそ、間違いに気づけました。</p>
+  <p>近年は、AIが数学で新しい結果を出した例もあります。2023年には、AIシステム「FunSearch」が組合せ数学の問題で新しい構成を見つけました（ただし問題そのものは未解決のままです）。同じ2023年の「1枚で平面を非周期に埋めるタイル」の発見は、AIではなく人の発見に計算機の助けを借りたものでした。道具は進歩しても、「本当に確かか」を確かめる姿勢の大切さは変わりません。そして和久井静夫さんの問題のように、本の中で半世紀以上「分からない」のまま残っている問いもあります。身近なパズルの「分からない」は、数学の最前線の「分からない」と地続きなのです。</p>
+  <h3>作り手の教室から</h3>
+  <p>この工房の作り手が教員だったころ、選択教科の数学で厚紙のタングラムを生徒に配ったことがあります。クラスみんなで「どんな多角形ができるか」を確かめ、1時間で六角形を作った生徒や、「人」の形を作って見せてくれた生徒がいました。清少納言知恵板では、影絵作りも楽しみました。紙と手で考える楽しさは、今も変わりません。</p>`;
+}
+
+/* ================= ヒーローのタングラム ================= */
+function buildHero(){
+  const g=$('hero-tan');
+  const B=BOARDS.tangram;
+  B.pieces.forEach((p,i)=>{
+    const pts=p.poly.map(v=>(v[0]-2)+','+(-(v[1]-2))).join(' ');
+    svgEl('polygon',{points:pts, fill:COLORS[i%COLORS.length], stroke:'rgba(255,255,255,.75)', 'stroke-width':.05, 'stroke-linejoin':'round'},g);
+  });
+}
+
+/* ================= 印刷キット（A4型紙PDF） ================= */
+function drawKit(key, style){
+  const B=BOARDS[key];
+  const W=2480, H=3508, cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+  const c=cv.getContext('2d');
+  c.fillStyle='#ffffff'; c.fillRect(0,0,W,H);
+  const unit=(key==='lucky'? 100/5 : 100/4); // mm per unit (一辺10cm基準、ラッキーは幅12.5cm)
+  const pxmm=300/25.4; // 300dpi
+  const sc=unit*pxmm;
+  const bw=B.w*sc, bh=B.h*sc;
+  const ox=(W-bw)/2, oy=560+ (900-bh)/2;
+  c.fillStyle='#2b2118'; c.textAlign='center';
+  c.font='bold 92px "Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif';
+  c.fillText('知恵板工房 型紙 ― '+B.name, W/2, 300);
+  c.font='44px "Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif';
+  c.fillStyle='#7a6a58';
+  c.fillText('線にそって切り分けると、'+B.pieces.length+'つのピースになります。', W/2, 420);
+  // 図形（ホーム配置の切り分け線）
+  const Xp=x=>ox+x*sc, Yp=y=>oy+(B.h-y)*sc;
+  c.lineJoin='round';
+  B.pieces.forEach((p, pi)=>{
+    const path=()=>{ c.beginPath(); p.poly.forEach((v,i)=>{ if(i===0) c.moveTo(Xp(v[0]),Yp(v[1])); else c.lineTo(Xp(v[0]),Yp(v[1])); }); c.closePath(); };
+    const base=COLORS[pi%COLORS.length];
+    if(style==='color'){
+      path(); c.fillStyle=base; c.fill();
+    }else if(style==='pattern'){
+      const bb=bbox(p.poly), x0=Xp(bb.a[0])-90, x1=Xp(bb.b[0])+90, y0=Yp(bb.b[1])-90, y1=Yp(bb.a[1])+90;
+      c.save(); path(); c.clip();
+      c.fillStyle=base; c.fillRect(x0, y0, x1-x0, y1-y0);
+      c.strokeStyle='rgba(255,255,255,.55)'; c.fillStyle='rgba(255,255,255,.55)'; c.lineWidth=20;
+      const m=pi%7;
+      if(m===0){ c.beginPath(); for(let x=x0-(y1-y0); x<x1; x+=95){ c.moveTo(x, y1); c.lineTo(x+(y1-y0), y0); } c.stroke(); }
+      else if(m===1){ for(let x=x0; x<x1; x+=120) for(let y=y0; y<y1; y+=120){ c.beginPath(); c.arc(x+((y/120)%2)*60, y, 17, 0, 7); c.fill(); } }
+      else if(m===2){ for(let y=y0; y<y1; y+=110) c.fillRect(x0, y, x1-x0, 26); }
+      else if(m===3){ c.beginPath(); for(let x=x0; x<x1; x+=110){ c.moveTo(x, y0); c.lineTo(x, y1); } for(let y=y0; y<y1; y+=110){ c.moveTo(x0, y); c.lineTo(x1, y); } c.stroke(); }
+      else if(m===4){ for(let x=x0; x<x1; x+=110) c.fillRect(x, y0, 26, y1-y0); }
+      else if(m===5){ c.beginPath(); for(let y=y0; y<y1; y+=95){ for(let x=x0; x<x1; x+=70){ c.lineTo(x, y+((x/70)%2? -18:18)); } } c.stroke(); }
+      else { for(let x=x0; x<x1; x+=135) for(let y=y0; y<y1; y+=135){ c.beginPath(); c.arc(x, y, 32, 0, 7); c.stroke(); } }
+      c.restore();
+    }else{
+      path(); c.fillStyle='rgba(179,84,30,.07)'; c.fill();
+    }
+    path(); c.strokeStyle='#2b2118'; c.lineWidth=5; c.stroke();
+    const cen=centroid(p.poly);
+    c.font='bold 40px "Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif';
+    if(style==='mono'){ c.fillStyle='#2b2118'; }
+    else { c.lineWidth=7; c.strokeStyle='rgba(255,255,255,.85)'; c.strokeText(p.name, Xp(cen[0]), Yp(cen[1])+14); c.fillStyle='#2b2118'; }
+    c.fillText(p.name, Xp(cen[0]), Yp(cen[1])+14);
+  });
+  // 5cm確認線
+  const y5=oy+bh+150;
+  c.strokeStyle='#b3541e'; c.lineWidth=6;
+  c.beginPath(); c.moveTo(ox, y5); c.lineTo(ox+50*pxmm, y5); c.stroke();
+  c.beginPath(); c.moveTo(ox, y5-24); c.lineTo(ox, y5+24); c.moveTo(ox+50*pxmm, y5-24); c.lineTo(ox+50*pxmm, y5+24); c.stroke();
+  c.fillStyle='#b3541e'; c.font='bold 46px "Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif';
+  c.textAlign='left'; c.fillText('5cm（この線が5cmなら実物大です）', ox+50*pxmm+40, y5+16);
+  c.fillStyle='#7a6a58'; c.font='40px "Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif';
+  c.fillText('ずれているときは、プリンタの設定で「実際のサイズ（100%）」を選んでください。', ox, y5+130);
+  c.fillText('不具合が出るかもしれません。ご使用の際に不具合がありましたら、', ox, y5+230);
+  c.fillText('noteのコメント欄からお知らせください。', ox, y5+300);
+  return cv;
+}
+function canvasToPdfBlob(cv){
+  return new Promise(res=>{
+    cv.toBlob(jpeg=>{
+      const fr=new FileReader();
+      fr.onload=()=>{
+        const img=new Uint8Array(fr.result);
+        const Wpt=595.28, Hpt=841.89;
+        const enc=new TextEncoder();
+        const parts=[]; const offs=[]; let len=0;
+        const push=a=>{ parts.push(a); len+=a.length; };
+        const pushStr=s=>push(enc.encode(s));
+        pushStr('%PDF-1.4\n');
+        offs[1]=len; pushStr('1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n');
+        offs[2]=len; pushStr('2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n');
+        offs[3]=len; pushStr('3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '+Wpt.toFixed(2)+' '+Hpt.toFixed(2)+'] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>\nendobj\n');
+        offs[4]=len; pushStr('4 0 obj\n<< /Type /XObject /Subtype /Image /Width '+cv.width+' /Height '+cv.height+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+img.length+' >>\nstream\n');
+        push(img); pushStr('\nendstream\nendobj\n');
+        const content='q '+Wpt.toFixed(2)+' 0 0 '+Hpt.toFixed(2)+' 0 0 cm /Im0 Do Q';
+        offs[5]=len; pushStr('5 0 obj\n<< /Length '+content.length+' >>\nstream\n'+content+'\nendstream\nendobj\n');
+        const xref=len;
+        pushStr('xref\n0 6\n0000000000 65535 f \n');
+        for(let i=1;i<=5;i++) pushStr(String(offs[i]).padStart(10,'0')+' 00000 n \n');
+        pushStr('trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF');
+        res(new Blob(parts, {type:'application/pdf'}));
+      };
+      fr.readAsArrayBuffer(jpeg);
+    }, 'image/jpeg', 0.92);
+  });
+}
+function buildPrintBtns(){
+  const wrap=$('print-btns'); wrap.innerHTML='';
+  for(const key of Object.keys(BOARDS)){
+    const b=document.createElement('button');
+    b.type='button'; b.className='tool-btn';
+    b.textContent=BOARDS[key].name+' の型紙を作る';
+    b.addEventListener('click', async ()=>{
+      b.disabled=true; b.textContent='作成中…';
+      try{
+        const cv=drawKit(key, S.kitStyle);
+        S.kitPdf=await canvasToPdfBlob(cv);
+        S.kitName='chieita-katagami-'+key+'-'+S.kitStyle+'.pdf';
+        $('print-actions').style.display='';
+        $('kit-name').textContent='用意できました：'+BOARDS[key].name+' の型紙PDF。「共有する」から印刷できます。';
+        toast(BOARDS[key].name+' の型紙ができました');
+      }catch(e){ toast('作成に失敗しました。もう一度お試しください。'); }
+      b.disabled=false; b.textContent=BOARDS[key].name+' の型紙を作る';
+    });
+    wrap.appendChild(b);
+  }
+}
+
+/* ================= 配線と初期化 ================= */
+function wire(){
+  $('rot-l').addEventListener('click', ()=>rotateSel(-45));
+  $('rot-r').addEventListener('click', ()=>rotateSel(45));
+  $('rot-l5').addEventListener('click', ()=>rotateSel(-5));
+  $('rot-r5').addEventListener('click', ()=>rotateSel(5));
+  $('flip-btn').addEventListener('click', flipSel);
+  $('snap-btn').addEventListener('click', ()=>{
+    S.snap=!S.snap; $('snap-btn').setAttribute('aria-pressed', S.snap?'true':'false');
+    toast(S.snap?'吸着 ON：置いたとき、きれいに揃います':'吸着 OFF：自由に置けます');
+  });
+  $('answer-btn').addEventListener('click', ()=>{
+    S.showSol=!S.showSol;
+    $('answer-btn').textContent=S.showSol?'こたえを消す':'こたえを見る';
+    render();
+  });
+  $('judge-btn').addEventListener('click', judge);
+  $('reset-btn').addEventListener('click', setupScene);
+  $('mode-free').addEventListener('click', ()=>{ setModeUI('free'); setupScene(); });
+  $('mode-odai').addEventListener('click', ()=>{ setModeUI('odai'); S.odaiIdx=Math.min(S.odaiIdx, currentOdaiList().length-1); setupScene(); });
+  $('mode-chal').addEventListener('click', ()=>{ setModeUI('chal'); if(S.chalIdx<0) S.chalIdx=0; setupScene(); });
+  const syncTheme=()=>{ for(const t of ['black','color','pattern']) $('theme-'+t).setAttribute('aria-pressed', S.theme===t?'true':'false'); };
+  for(const t of ['black','color','pattern']) $('theme-'+t).addEventListener('click', ()=>{ S.theme=t; try{ localStorage.setItem('ck-theme', t); }catch(_){} syncTheme(); render(); });
+  syncTheme();
+  const syncKit=()=>{ for(const t of ['mono','color','pattern']) $('kit-'+t).setAttribute('aria-pressed', S.kitStyle===t?'true':'false'); };
+  for(const t of ['mono','color','pattern']) $('kit-'+t).addEventListener('click', ()=>{ S.kitStyle=t; syncKit(); });
+  syncKit();
+  $('share-kit').addEventListener('click', async ()=>{
+    if(!S.kitPdf) return;
+    const file=new File([S.kitPdf], S.kitName, {type:'application/pdf'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      try{ await navigator.share({files:[file], title:'知恵板工房 型紙'}); }catch(_){}
+    }else{ toast('この端末では共有が使えないため、「PDFを保存」をお使いください'); }
+  });
+  $('dl-kit').addEventListener('click', ()=>{
+    if(!S.kitPdf) return;
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(S.kitPdf); a.download=S.kitName;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+  });
+  document.addEventListener('touchmove', ev=>{
+    const st=$('stage');
+    if(drag && st && (ev.target===st || st.contains(ev.target))) ev.preventDefault();
+  }, {passive:false});
+}
+buildHero();
+buildBoards();
+buildChips();
+buildChallenge();
+buildColumn();
+buildPrintBtns();
+wire();
+syncModeUI();
+setupScene();
+refreshTools();
+</script>
+</body>
+</html>
