@@ -144,6 +144,7 @@ footer{text-align:center; color:var(--sub); font-size:12px; padding:8px 14px 30p
     </div>
     <p class="msg" id="msg" aria-live="polite"></p>
     <div class="toolbar" id="piece-tools">
+      <button type="button" class="tool-btn" id="rotmode-btn" aria-pressed="false">🔄 まわすモード</button>
       <button type="button" class="tool-btn" id="rot-l">⟲ 45°</button>
       <button type="button" class="tool-btn" id="rot-r">⟳ 45°</button>
       <button type="button" class="tool-btn" id="rot-l5">⟲ 5°</button>
@@ -156,7 +157,7 @@ footer{text-align:center; color:var(--sub); font-size:12px; padding:8px 14px 30p
       <button type="button" class="tool-btn primary" id="judge-btn" style="display:none">できたか確かめる</button>
       <button type="button" class="tool-btn" id="reset-btn">最初から</button>
     </div>
-    <p class="drag-note">💡 ピースは指（マウス）でドラッグ。ダブルタップでも45°回ります。ピースを選んでから、下のボタンで回転・裏返しもできます。</p>
+    <p class="drag-note" id="drag-note">💡 ピースは指（マウス）でドラッグで移動。ダブルタップでも45°回ります。「まわすモード」では、ピースの周りをなぞって自由に回せます。</p>
   </section>
 
   <section class="card" id="chal-card" style="display:none" aria-label="凸多角形コレクション">
@@ -242,7 +243,7 @@ function latticeSnap(v){
 const COLORS=['#e4572e','#f2a541','#2e9e8b','#7fb069','#577590','#9b5de5','#ef476f'];
 const S={
   board:'tangram', mode:'free', odaiIdx:0, chalIdx:-1,
-  pieces:[], sel:-1, snap:true, showSol:false,
+  pieces:[], sel:-1, snap:true, showSol:false, rotMode:false,
   view:{x0:0,y0:0,w:5,h:5}, target:null, targetShift:[0,0], kitPdf:null, kitName:'',
   theme:(()=>{ try{ return localStorage.getItem('ck-theme')||'color'; }catch(_){ return 'color'; } })(),
   kitStyle:'mono',
@@ -442,12 +443,29 @@ function onPieceDown(ev, i){
   ev.preventDefault();
   select(i);
   const m=toMath(ev), pc=S.pieces[i];
+  if(S.rotMode){
+    const dx=m[0]-pc.pos[0], dy=m[1]-pc.pos[1];
+    drag={ i, rotDrag:true, moved:false, lastA:Math.atan2(dy,dx) };
+    snd.pick();
+    return;
+  }
   drag={ i, dx:pc.pos[0]-m[0], dy:pc.pos[1]-m[1], moved:false, lastTap:(drag&&drag.lastTap)||0 };
   snd.pick();
 }
 window.addEventListener('pointermove', ev=>{
   if(!drag) return;
   const m=toMath(ev), pc=S.pieces[drag.i];
+  if(drag.rotDrag){
+    const dx=m[0]-pc.pos[0], dy=m[1]-pc.pos[1];
+    if(Math.hypot(dx,dy)>0.3){
+      const a=Math.atan2(dy,dx);
+      let d=(a-drag.lastA)*180/Math.PI;
+      while(d>180)d-=360; while(d<-180)d+=360;
+      if(d){ pc.rot+=d; drag.moved=true; render(); }
+      drag.lastA=a;
+    }
+    return;
+  }
   pc.pos=[m[0]+drag.dx, m[1]+drag.dy];
   drag.moved=true;
   render();
@@ -457,10 +475,10 @@ window.addEventListener('pointerup', ()=>{
   const pc=S.pieces[drag.i];
   if(S.snap && drag.moved){
     pc.rot=Math.round(pc.rot/45)*45;
-    pc.pos=[latticeSnap(pc.pos[0]), latticeSnap(pc.pos[1])];
+    if(!drag.rotDrag) pc.pos=[latticeSnap(pc.pos[0]), latticeSnap(pc.pos[1])];
     render();
   }
-  if(drag.moved) snd.drop();
+  if(drag.moved){ if(drag.rotDrag) snd.rot(); else snd.drop(); }
   drag=null;
 });
 window.addEventListener('pointercancel', ()=>{ drag=null; });
@@ -730,6 +748,14 @@ function buildPrintBtns(){
 
 /* ================= 配線と初期化 ================= */
 function wire(){
+  $('rotmode-btn').addEventListener('click', ()=>{
+    S.rotMode=!S.rotMode;
+    $('rotmode-btn').setAttribute('aria-pressed', S.rotMode?'true':'false');
+    $('drag-note').textContent=S.rotMode
+      ? '🔄 まわすモード中：ピースの周りを指でなぞる（円を描く）と、そのピースが回ります。もう一度押すと、移動に戻ります。'
+      : '💡 ピースは指（マウス）でドラッグで移動。ダブルタップでも45°回ります。「まわすモード」では、ピースの周りをなぞって自由に回せます。';
+    toast(S.rotMode?'まわすモード：ピースの周りをなぞって回せます':'移動モード：ドラッグで動かせます');
+  });
   $('rot-l').addEventListener('click', ()=>rotateSel(-45));
   $('rot-r').addEventListener('click', ()=>rotateSel(45));
   $('rot-l5').addEventListener('click', ()=>rotateSel(-5));
